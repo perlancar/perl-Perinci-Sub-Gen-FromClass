@@ -24,7 +24,7 @@ $SPEC{gen_func_from_class} = {
 `gen_func_from_class` will create a function and Rinci metadata from a
 {Mo,Moo,Moose,Mouse} class. Given a class like this:
 
-    package MyClass;
+    # MyClass
     use Moo;
     has attr1 => (is => 'ro', required=>1);
     has attr2 => (is => 'rw');
@@ -157,7 +157,7 @@ sub gen_func_from_class {
 
 Given a Mo/Moo/Mouse/Moose class:
 
-    package MyClass;
+    # MyClass
     use Moo;
     has attr1 => (is => 'ro', required=>1);
     has attr2 => (is => 'rw');
