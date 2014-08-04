@@ -116,9 +116,17 @@ sub gen_func_from_class {
             if ($ass) { # Moo
                 for my $k (keys %$ass) {
                     my $v = $ass->{$k};
-                    $func_args{$k} = {
+                    my $as = {
                         req => $v->{required} ? 1:0,
                     };
+                    if (exists $v->{default}) {
+                        if (ref($v->{default}) eq 'CODE') {
+                            $as->{default} = $v->{default}->();
+                        } else {
+                            $as->{default} = $v->{default};
+                        }
+                    }
+                    $func_args{$k} = $as;
                 }
                 return;
             }

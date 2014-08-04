@@ -27,7 +27,7 @@ is_deeply($res->[2]{meta}, {
     args => {
         attr1 => { req=>1 },
         attr2 => { req=>0 },
-        attr3 => { req=>0 },
+        attr3 => { req=>0, default=>103 },
     },
     result_naked => 1,
 }, "meta");
