@@ -106,19 +106,26 @@ sub gen_func_from_class {
     }
 
     my %func_args;
-    my $doit = sub {
-        my $pkg = shift;
-        # attribute specs
-        my $ass = $Moo::MAKERS{$pkg}{constructor}{attribute_specs};
-        for my $k (keys %$ass) {
-            my $v = $ass->{$k};
-            $func_args{$k} = {
-                req => $v->{required} ? 1:0,
-            };
-        }
-    };
-    # XXX climb up @ISA
-    $doit->($class);
+    {
+        my $doit;
+        $doit = sub {
+            no strict 'refs';
+            my $pkg = shift;
+            # attribute specs
+            my $ass = $Moo::MAKERS{$pkg}{constructor}{attribute_specs};
+            if ($ass) { # Moo
+                for my $k (keys %$ass) {
+                    my $v = $ass->{$k};
+                    $func_args{$k} = {
+                        req => $v->{required} ? 1:0,
+                    };
+                }
+                return;
+            }
+            $doit->($_) for @{"$pkg\::ISA"};
+        };
+        $doit->($class);
+    }
 
     my $meta = {
         v => 1.1,

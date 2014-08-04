@@ -10,8 +10,7 @@ use Perinci::Sub::Gen::FromClass qw(gen_func_from_class);
 use Test::More 0.98;
 
 my $res = gen_func_from_class(
-    class   => 'Foo::Moo',
-    type    => 'Moo',
+    class   => 'Bar::Moo',
     method  => 'meth1',
 
     summary => 'A summary',
@@ -28,9 +27,11 @@ is_deeply($res->[2]{meta}, {
     args => {
         attr1 => { req=>1 },
         attr2 => { req=>0 },
+        attr3 => { req=>0 },
     },
     result_naked => 1,
 }, "meta");
+is($res->[2]{func}->(attr1=>1), 1001, "func result");
 
 DONE_TESTING:
 done_testing;
