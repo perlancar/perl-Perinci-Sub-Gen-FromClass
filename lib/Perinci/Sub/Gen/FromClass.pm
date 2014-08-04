@@ -136,7 +136,7 @@ sub gen_func_from_class {
         if ($args{method_args}) {
             @meth_args = @{ $args{method_args} };
         }
-        $obj->$method->(@meth_args);
+        $obj->$method(@meth_args);
     };
 
     if ($install) {
