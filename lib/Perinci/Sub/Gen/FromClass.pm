@@ -7,7 +7,7 @@ use 5.010001;
 use strict;
 use warnings;
 
-use Monkey::Patch::Action qw(patch_package);
+#use Monkey::Patch::Action qw(patch_package);
 use Perinci::Sub::Gen;
 
 require Exporter;
@@ -47,8 +47,8 @@ along with Rinci metadata like this:
         },
     }
 
-It works by wrapping the `has` function provided by Mo* to get the list of
-attributes. The attributes will become the generated function's arguments.
+Currently only Moo-based class is supported. Support for other Mo* family
+members will be added.
 
 _
     args => {
@@ -86,15 +86,16 @@ sub gen_func_from_class {
         return [400, "Invalid value for 'class', please use Foo::Bar ".
                     "syntax only"];
     my $method = $args{method} or return [400, "Please specify 'method'"];
-    if ($arsg{load} // 1) {
+    if ($args{load} // 1) {
         my $classp = $class;
         $classp =~ s!::!/!g; $classp .= ".pm";
         require $classp;
     }
     my $install = $args{install} // 1;
-    my $fqname = $args{name};
+    my $fqname = $args{name} // 'noname';
     return [400, "Please specify 'name'"] unless $fqname || !$install;
     my @caller = caller();
+    my ($package, $uqname);
     if ($fqname =~ /(.+)::(.+)/) {
         $package = $1;
         $uqname  = $2;
@@ -104,18 +105,20 @@ sub gen_func_from_class {
         $fqname  = "$package\::$uqname";
     }
 
-    my $handle;
     my %func_args;
-    push @handles, patch_package(
-        $class, 'has', 'wrap', sub {
-            my $ctx = shift;
-            my ($name, %clauses) = @_;
-            $func_args{$name} = {
-                req => $clauses{required} ? 1:0,
-                # XXX schema
+    my $doit = sub {
+        my $pkg = shift;
+        # attribute specs
+        my $ass = $Moo::MAKERS{$pkg}{constructor}{attribute_specs};
+        for my $k (keys %$ass) {
+            my $v = $ass->{$k};
+            $func_args{$k} = {
+                req => $v->{required} ? 1:0,
             };
-            $ctx->{orig}->(@_);
-        });
+        }
+    };
+    # XXX climb up @ISA
+    $doit->($class);
 
     my $meta = {
         v => 1.1,
@@ -141,7 +144,7 @@ sub gen_func_from_class {
         no warnings;
         #$log->tracef("Installing function as %s ...", $fqname);
         *{ $fqname } = $func;
-        ${$package . "::SPEC"}{$uqname} = $func_meta;
+        ${$package . "::SPEC"}{$uqname} = $meta;
     }
 
     return [200, "OK", {meta=>$meta, func=>$func}];
@@ -169,6 +172,7 @@ you can generate a function for it:
         name   => 'do_this',
 
         class  => 'MyClass',
+        type   => 'Moo',
         method => 'do_this',
         method_args => [3, 4, 5], # optional
     );
@@ -197,9 +201,6 @@ This module helps you create that function from a class.
 
 
 =head1 TODO
-
-Get attributes from superclass (by trapping the C<extends> keyword or perhaps
-look at C<@ISA> directly).
 
 Translate C<isa> option in C<has> into argument schema.
 
