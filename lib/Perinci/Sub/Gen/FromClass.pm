@@ -7,7 +7,7 @@ use 5.010001;
 use strict;
 use warnings;
 
-#use Monkey::Patch::Action qw(patch_package);
+use Monkey::Patch::Action qw(patch_package);
 use Perinci::Sub::Gen;
 
 require Exporter;
@@ -47,27 +47,20 @@ along with Rinci metadata like this:
         },
     }
 
-Currently only Moo-based class is supported. Support for other Mo* family
-members will be added.
+Currently only Mo- and Moo-based class is supported. Support for other Mo*
+family members will be added.
 
 _
     args => {
         %Perinci::Sub::Gen::common_args,
         class => {
-            summary => 'Class name, will be loaded with require() unless when '.
-                '`load` is false',
+            summary => 'Class name, will be loaded with require()',
             req => 1,
         },
         method => {
             summary => 'Method of class to call',
             req => 1,
             # XXX guess if not specified?
-        },
-        load => {
-            summary => 'Whether to load the class',
-            schema => 'bool',
-            default => 1,
-            req => 1,
         },
         method_args => {
             schema => 'array*',
@@ -86,12 +79,53 @@ sub gen_func_from_class {
         return [400, "Invalid value for 'class', please use Foo::Bar ".
                     "syntax only"];
     my $method = $args{method} or return [400, "Please specify 'method'"];
-    if ($args{load} // 1) {
+
+    my %mo_attrs;
+    {
+        my $handle_mo;
+        # doesn't work if Mo is inlined
+        if (eval "require Mo; 1") {
+            require Mo::default;
+            require Mo::required;
+            my $M = "Mo::";
+            # copied and modified from Mo 0.38
+            $handle_mo = patch_package(
+                'Mo', 'import', 'replace',
+                sub {
+    no strict; ###
+    import warnings;
+    $^H |= 1538;
+    my ( $P, %e, %o ) = caller . '::';
+    shift;
+    eval "no Mo::$_", &{ $M . $_ . '::e' }( $P, \%e, \%o, \@_ ) for @_;
+    return if $e{M};
+    %e = ( 'extends',
+        sub { eval "no $_[0]()"; @{ $P . ISA } = $_[0] },
+        'has',
+        sub {
+            my $n = shift;
+            my $p = $P; $p =~ s/::$//; $mo_attrs{$p}{$n} = {@_}; ###
+            my $m = sub { $#_ ? $_[0]{$n} = $_[1] : $_[0]{$n} };
+            @_ = ( 'default', @_ ) if !( $#_ % 2 );
+            $m = $o{$_}->( $m, $n, @_ ) for sort keys %o;
+            *{ $P . $n } = $m;
+        },
+        %e,
+    );
+    *{ $P . $_ } = $e{$_} for keys %e;
+    @{ $P . ISA } = $M . Object;
+                },
+            );
+        }
+        # to support Mouse and Moose we'll need to let user enable it, because
+        # of the startup overhead
         my $classp = $class;
         $classp =~ s!::!/!g; $classp .= ".pm";
         require $classp;
     }
+
     my $install = $args{install} // 1;
+
     my $fqname = $args{name} // 'noname';
     return [400, "Please specify 'name'"] unless $fqname || !$install;
     my @caller = caller();
@@ -111,9 +145,9 @@ sub gen_func_from_class {
         $doit = sub {
             no strict 'refs';
             my $pkg = shift;
-            # attribute specs
-            my $ass = $Moo::MAKERS{$pkg}{constructor}{attribute_specs};
-            if ($ass) { # Moo
+            my $ass = $mo_attrs{$pkg} //
+                $Moo::MAKERS{$pkg}{constructor}{attribute_specs};
+            if ($ass) {
                 for my $k (keys %$ass) {
                     my $v = $ass->{$k};
                     my $as = {
@@ -128,7 +162,6 @@ sub gen_func_from_class {
                     }
                     $func_args{$k} = $as;
                 }
-                return;
             }
             $doit->($_) for @{"$pkg\::ISA"};
         };
