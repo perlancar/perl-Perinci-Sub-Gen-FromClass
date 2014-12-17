@@ -18,7 +18,7 @@ our %SPEC;
 
 $SPEC{gen_func_from_class} = {
     v => 1.1,
-    summary => 'Generate function from a class',
+    summary => 'Generate function (and its Rinci metadata) from a class',
     description => <<'_',
 
 `gen_func_from_class` will create a function and Rinci metadata from a
@@ -199,7 +199,7 @@ sub gen_func_from_class {
 }
 
 1;
-# ABSTRACT: Generate function (and its Rinci metadata) from a class
+# ABSTRACT:
 
 =head1 SYNOPSIS
 
