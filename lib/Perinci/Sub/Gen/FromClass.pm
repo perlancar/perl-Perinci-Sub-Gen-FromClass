@@ -248,11 +248,6 @@ when it could very well just be:
 This module helps you create that function from a class.
 
 
-=head1 TODO
-
-Translate C<isa> option in C<has> into argument schema.
-
-
 =head1 SEE ALSO
 
 L<Rinci>
