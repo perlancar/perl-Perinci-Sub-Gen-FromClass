@@ -155,7 +155,10 @@ sub gen_func_from_class {
                     };
                     if (exists $v->{default}) {
                         if (ref($v->{default}) eq 'CODE') {
-                            $as->{default} = $v->{default}->();
+                            # XXX we're required to send $self to coderef, so we
+                            # don't do it yet.
+
+                            #$as->{default} = $v->{default}->($obj);
                         } else {
                             $as->{default} = $v->{default};
                         }
