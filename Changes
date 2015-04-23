@@ -1,5 +1,11 @@
 Revision history for Perinci-Sub-Gen-FromClass
 
+0.03    2015-04-23 (PERLANCAR)
+
+	- Don't call attribute's default coderef because this requires
+	  sending $self [RT#103900].
+
+
 0.02     2014-08-04 (SHARYANTO)
 
          - Climb up @ISA, as one should.
