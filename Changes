@@ -1,4 +1,4 @@
-0.04    2015-09-04 (PERLANCAR)
+0.04    2015-09-04  Released-By: PERLANCAR
 
 	- No functional changes.
 
@@ -7,13 +7,13 @@
 	  requirement.
 
 
-0.03    2015-04-23 (PERLANCAR)
+0.03    2015-04-23  Released-By: PERLANCAR
 
 	- Don't call attribute's default coderef because this requires
 	  sending $self [RT#103900].
 
 
-0.02     2014-08-04 (SHARYANTO)
+0.02     2014-08-04  Released-By: SHARYANTO
 
          - Climb up @ISA, as one should.
 
@@ -24,6 +24,6 @@
          - Fix syntax of calling method.
 
 
-0.01     2014-08-04 (SHARYANTO)
+0.01     2014-08-04  Released-By: SHARYANTO
 
          - First release.
